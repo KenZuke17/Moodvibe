@@ -11,6 +11,10 @@ from PIL import Image
 from deepface import DeepFace
 import datetime
 import os
+import hashlib
+import secrets
+import smtplib
+from email.message import EmailMessage
 from dotenv import load_dotenv
 import json
 import requests
@@ -28,6 +32,31 @@ client, db, users_collection, emotions_collection, media_collection, mood_journa
 
 if client is None:
     print("Failed to initialize MongoDB. Application may not function correctly.")
+
+def send_password_reset_email(recipient, reset_url):
+    smtp_host = os.environ['SMTP_HOST']
+    smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    smtp_username = os.environ['SMTP_USERNAME']
+    smtp_password = os.environ['SMTP_PASSWORD']
+    sender = os.environ.get('SMTP_FROM', smtp_username)
+
+    message = EmailMessage()
+    message['Subject'] = 'MoodVibe password reset'
+    message['From'] = sender
+    message['To'] = recipient
+    message.set_content(
+        f'Use this link to reset your MoodVibe password. It expires in 30 minutes:\n\n{reset_url}'
+    )
+
+    if smtp_port == 465:
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
+            server.login(smtp_username, smtp_password)
+            server.send_message(message)
+    else:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(message)
 
 # Hardcoded media data for recommendations
 RECOMMENDATIONS = {
@@ -235,6 +264,62 @@ def index():
 @app.route('/login')
 def login():
     return render_template('login.html')
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    message = None
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        user = users_collection.find_one({'email': email}) if email else None
+
+        if user:
+            token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
+            expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+            users_collection.update_one(
+                {'_id': user['_id']},
+                {'$set': {
+                    'password_reset_token': token_hash,
+                    'password_reset_expires': expires_at,
+                }}
+            )
+            reset_url = url_for('reset_password', token=token, _external=True)
+            try:
+                send_password_reset_email(email, reset_url)
+            except Exception as error:
+                print(f'Password reset email error: {error}')
+
+        message = 'If an account exists for that email, a password reset link has been sent.'
+
+    return render_template('forgot_password.html', message=message)
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    user = users_collection.find_one({
+        'password_reset_token': token_hash,
+        'password_reset_expires': {'$gt': datetime.datetime.utcnow()},
+    })
+
+    if not user:
+        return render_template('reset_password.html', invalid_token=True), 400
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirmation = request.form.get('confirmation', '')
+        if len(password) < 6:
+            return render_template('reset_password.html', error='Password must be at least 6 characters long.')
+        if password != confirmation:
+            return render_template('reset_password.html', error='Passwords do not match.')
+
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {'$set': {'password': bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())},
+             '$unset': {'password_reset_token': '', 'password_reset_expires': ''}}
+        )
+        return render_template('reset_password.html', success=True)
+
+    return render_template('reset_password.html')
 
 @app.route('/register')
 def register():

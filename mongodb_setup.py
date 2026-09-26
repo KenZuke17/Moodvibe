@@ -5,14 +5,22 @@ This script initializes the MongoDB database with collections and indexes
 
 import pymongo
 from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 def setup_mongodb():
     """Initialize MongoDB with collections and indexes"""
     
     # Connect to MongoDB Atlas
     try:
-        client = MongoClient('mongodb+srv://abdulashfaq1226:x6qxEoBct7wmOh4t@cluster0.ovby0jk.mongodb.net/')
-        db = client['emotion_recognition']
+        client = MongoClient(
+            os.environ['MONGODB_URI'],
+            serverSelectionTimeoutMS=5000,
+        )
+        client.admin.command('ping')
+        db = client[os.environ.get('MONGODB_DB_NAME', 'emotion_recognition')]
         print("Connected to MongoDB Atlas successfully!")
     except Exception as e:
         print(f"MongoDB connection error: {e}")
