@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MoodVibe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="auth-page">
+    <div class="auth-background parallax-bg"></div>
+    
+    <div class="auth-container">
+        <div class="auth-form-container">
+            <div class="auth-header">
+                <a href="/" class="logo">
+                    <i class="fas fa-brain"></i>
+                    <span>MoodVibe</span>
+                </a>
+                <h2>Welcome Back</h2>
+                <p>Sign in to discover your mood and get personalized recommendations</p>
+            </div>
+            
+            <form class="auth-form" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="auth-button">
+                    <span>Sign In</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register">Sign up here</a></p>
+                <a href="/" class="back-link">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="theme-switch auth-theme-switch">
+        <i class="fas fa-sun theme-icon"></i>
+    </div>
+    
+    <script>
+        // Theme switching
+        document.querySelector('.theme-switch').addEventListener('click', function() {
+            document.body.classList.toggle('dark-theme');
+            const icon = this.querySelector('.theme-icon');
+            icon.classList.toggle('fa-sun');
+            icon.classList.toggle('fa-moon');
+            
+            // Save theme preference
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.querySelector('.theme-icon').classList.replace('fa-sun', 'fa-moon');
+        }
+        
+        // Form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/home';
+                } else {
+                    // Show error animation
+                    const form = document.querySelector('.auth-form-container');
+                    form.classList.add('shake');
+                    setTimeout(() => form.classList.remove('shake'), 500);
+                    
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

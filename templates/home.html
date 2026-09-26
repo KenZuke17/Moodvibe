@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - MoodVibe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="home-page">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-brain"></i>
+                <span>MoodVibe</span>
+            </div>
+            <div class="nav-menu">
+                <div class="theme-switch">
+                    <i class="fas fa-sun theme-icon"></i>
+                </div>
+                <a href="#mood-journal" class="nav-link">Journal</a>
+                <a href="#history" class="nav-link">History</a>
+                <button class="nav-link logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Emotion Capture Section -->
+        <section class="emotion-capture">
+            <div class="container">
+                <h1 class="main-title">How are you feeling today?</h1>
+                
+                <!-- Camera Section -->
+                <div class="camera-section">
+                    <div class="camera-container">
+                        <video id="webcam" autoplay muted></video>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        <div class="camera-overlay">
+                            <div class="camera-frame"></div>
+                            <p class="camera-instruction">Position your face in the center</p>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <button id="captureBtn" class="capture-btn">
+                            <i class="fas fa-camera"></i>
+                            <span>Capture Emotion</span>
+                        </button>
+                        <button id="toggleCamera" class="toggle-camera-btn">
+                            <i class="fas fa-video"></i>
+                            <span>Start Camera</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Emotion Result -->
+                <div class="emotion-result" id="emotionResult">
+                    <div class="emotion-display">
+                        <div class="emotion-icon">
+                            <i class="fas fa-smile"></i>
+                        </div>
+                        <div class="emotion-text">
+                            <h3 id="emotionName">Happy</h3>
+                            <p id="emotionConfidence">85% confidence</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendations Section -->
+        <section class="recommendations" id="recommendations">
+            <div class="container">
+                <h2 class="section-title">Recommendations for You</h2>
+                
+                <div class="recommendation-categories">
+                    <button class="category-btn active" data-category="all">All</button>
+                    <button class="category-btn" data-category="movie">Movies</button>
+                    <button class="category-btn" data-category="song">Songs</button>
+                    <button class="category-btn" data-category="book">Books</button>
+                </div>
+                
+                <div class="recommendations-grid" id="recommendationsGrid">
+                    <!-- Recommendations will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Journal Section -->
+        <section class="mood-journal" id="mood-journal">
+            <div class="container">
+                <h2 class="section-title">Mood Journal</h2>
+                
+                <div class="journal-form">
+                    <div class="form-group">
+                        <label for="journalEmotion">How do you feel?</label>
+                        <select id="journalEmotion">
+                            <option value="happy">Happy</option>
+                            <option value="sad">Sad</option>
+                            <option value="angry">Angry</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="surprise">Surprised</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="journalNote">Add a note (optional)</label>
+                        <textarea id="journalNote" placeholder="What's on your mind?"></textarea>
+                    </div>
+                    
+                    <button class="journal-btn" onclick="addJournalEntry()">
+                        <i class="fas fa-plus"></i>
+                        Add Entry
+                    </button>
+                </div>
+                
+                <div class="journal-entries" id="journalEntries">
+                    <!-- Journal entries will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section class="history" id="history">
+            <div class="container">
+                <h2 class="section-title">Your Emotion History</h2>
+                
+                <div class="history-controls">
+                    <button class="history-btn" onclick="generatePlaylist()">
+                        <i class="fas fa-download"></i>
+                        Generate Playlist
+                    </button>
+                    <button class="history-btn" onclick="refreshHistory()">
+                        <i class="fas fa-refresh"></i>
+                        Refresh
+                    </button>
+                </div>
+                
+                <div class="history-grid" id="historyGrid">
+                    <!-- History items will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Analyzing your emotion...</p>
+        </div>
+    </div>
+
+    <!-- Music Player -->
+    <div class="music-player" id="musicPlayer">
+        <div class="player-controls">
+            <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+            <div class="player-info">
+                <span id="currentSong">No song selected</span>
+            </div>
+            <button id="closePlayer"><i class="fas fa-times"></i></button>
+        </div>
+        <audio id="audioPlayer"></audio>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='home.js') }}"></script>
+</body>
+</html>
